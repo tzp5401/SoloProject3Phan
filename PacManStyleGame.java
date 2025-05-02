@@ -160,7 +160,7 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
 
         // YOU HAVE TO MANUALLY PLACE THE WALLS ALONG THE CITY BUILDINGS. I HAVE THE WALLS PAINTED SO YOU CAN SEE HWAT YOURE DOING
 
-        // Wall Formation and Collision For Building #1 Using Array List
+        // Wall Formation and Collision For Building #1 Using Array List:
         maze[3][0] = 1;
         maze[3][1] = 1;
         maze[3][2] = 1;
@@ -171,7 +171,7 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
         maze[1][5] = 1;
         maze[0][5] = 1;
 
-        // Wall Formation and Collision For Building #2 Using Array List
+        // Wall Formation and Collision For Building #2 Using Array List:
         maze[1][8] = 1;
         maze[2][8] = 1;
         maze[3][8] = 1;
@@ -186,6 +186,16 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
         maze[3][17] = 1;
         maze[2][17] = 1;
         maze[1][17] = 1;
+
+        // Wall Formation and Collision For Building #3 Using Array List:
+        maze[1][19] = 1;
+        maze[1][20] = 1;
+        maze[1][21] = 1;
+        maze[2][19] = 1;
+        maze[3][19] = 1;
+        maze[3][20] = 1;
+        maze[3][21] = 1;
+
     }
 
     // Place money stacks and money bags
