@@ -69,7 +69,7 @@ class Officer {
 
     // Draw the Officer (Cop Car), using different frame if bribe
     public void draw(Graphics g, boolean bribe) {
-        int frame = bribe ? 1 : 0;
+        int frame = bribe ? 0 : 0;
         g.drawImage(sprite.getSubimage(frame * 32, 0, 32, 32), x, y, null);
     }
 }
@@ -86,6 +86,10 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
 
     int robberX = 15, robberY = 200;
     int robberDir = 0; // 0=left, 2=right, 4=up, 6=down
+    int AceDir = 0;
+    int StephaneDir = 0;
+    int JacksonDir = 0;
+    int DonutManDir = 0;
     int tileSize = 20;
 
     // Maze and dot map arrays
