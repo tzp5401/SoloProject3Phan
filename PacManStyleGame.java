@@ -323,7 +323,7 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
         }
 
 
-        // Move ghosts
+        // Move officers
         Ace.move(maze);
         Stephane.move(maze);
         Jackson.move(maze);
