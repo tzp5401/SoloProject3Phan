@@ -379,7 +379,7 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
             // Title screen
             g.setColor(Color.YELLOW);
             g.setFont(new Font("Arial", Font.BOLD, 36));
-            String title = "Robbers vs. Cops";
+            String title = "Robber vs. Cops";
             int titleWidth = g.getFontMetrics().stringWidth(title);
             g.drawString(title, (getWidth() - titleWidth) / 2, getHeight() / 2 - 50);
 
