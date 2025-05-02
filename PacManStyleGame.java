@@ -7,7 +7,6 @@ import java.awt.image.*;
 import java.io.*;
 import javax.imageio.*;
 
-
 class Officer {
     BufferedImage sprite;
     int x, y, dir;
@@ -68,9 +67,9 @@ class Officer {
         }
     }
 
-    // Draw the Officer (Cop Car), using different frame if scared
-    public void draw(Graphics g, boolean scared) {
-        int frame = scared ? 1 : 0;
+    // Draw the Officer (Cop Car), using different frame if bribe
+    public void draw(Graphics g, boolean bribe) {
+        int frame = bribe ? 1 : 0;
         g.drawImage(sprite.getSubimage(frame * 32, 0, 32, 32), x, y, null);
     }
 }
@@ -79,14 +78,14 @@ class Officer {
 public class PacManStyleGame extends JPanel implements ActionListener, KeyListener {
 
     Timer timer;
-    BufferedImage pacmanSprite;
+    BufferedImage robberSprite;
     BufferedImage moneySprite;
     BufferedImage backgroundImage;
     BufferedImage moneyBagImage;
     BufferedImage flippedBackgroundImage;
 
-    int pacmanX = 15, pacmanY = 200;
-    int pacmanDir = 0; // 0=left, 2=right, 4=up, 6=down
+    int robberX = 15, robberY = 200;
+    int robberDir = 0; // 0=left, 2=right, 4=up, 6=down
     int tileSize = 20;
 
     // Maze and dot map arrays
@@ -96,8 +95,8 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
     int score = 0;
     int level = 1;
     int lives = 3;
-    boolean scaredMode = false;
-    int scaredTimer = 0;
+    boolean bribeMode = false;
+    int bribeTimer = 0;
     boolean horizontal = false;
 
     boolean inStartMenu = true;
@@ -124,11 +123,12 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
         loadMaze();
         initMoney();
 
+
         // Initialize Officers
-        Ace = new Officer("Ace", "Cop Car.png", 180, 180);
-        Stephane  = new Officer("Stephane",  "Cop Car.png", 200, 180);
-        Jackson   = new Officer("Jackson",   "Cop Car.png", 220, 180);
-        DonutMan  = new Officer("DonutMan",  "Cop Car.png", 240, 180);
+        Ace = new Officer("Ace", "Red Cop Car.png", 180, 180);
+        Stephane  = new Officer("Stephane",  "Pink Cop Car.png", 200, 180);
+        Jackson   = new Officer("Jackson", "White Cop Car.png", 220, 180);
+        DonutMan  = new Officer("DonutMan",  "Donut Cop Car.png", 240, 180);
 
         timer = new Timer(40, this);
         timer.start();
@@ -138,7 +138,7 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
     // Load Cops vs. Robbers sprites
     void loadResources() {
         try {
-            pacmanSprite = ImageIO.read(new File("joe.png"));
+            robberSprite = ImageIO.read(new File("joe.png"));
             moneySprite = ImageIO.read(new File("moneystack.png"));
             backgroundImage = ImageIO.read(new File("citybackground.png"));
             flippedBackgroundImage = ImageIO.read(new File("flippedcitybackground.png"));
@@ -159,16 +159,33 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
         }
 
         // YOU HAVE TO MANUALLY PLACE THE WALLS ALONG THE CITY BUILDINGS. I HAVE THE WALLS PAINTED SO YOU CAN SEE HWAT YOURE DOING
+
+        // Wall Formation and Collision For Building #1 Using Array List
         maze[3][0] = 1;
         maze[3][1] = 1;
         maze[3][2] = 1;
         maze[3][3] = 1;
         maze[3][4] = 1;
         maze[3][5] = 1;
-
         maze[2][5] = 1;
         maze[1][5] = 1;
         maze[0][5] = 1;
+
+        // Wall Formation and Collision For Building #2 Using Array List
+        maze[1][8] = 1;
+        maze[2][8] = 1;
+        maze[3][8] = 1;
+        maze[3][9] = 1;
+        maze[3][10] = 1;
+        maze[3][11] = 1;
+        maze[3][12] = 1;
+        maze[3][13] = 1;
+        maze[3][14] = 1;
+        maze[3][15] = 1;
+        maze[3][16] = 1;
+        maze[3][17] = 1;
+        maze[2][17] = 1;
+        maze[1][17] = 1;
     }
 
     // Place money stacks and money bags
@@ -239,31 +256,31 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
     void mirrorMazeAndDots() {
         maze = mirrorArray(maze, horizontal);
         dotMap = mirrorArray(dotMap, horizontal);
-    }
+        }
 
     // Game logic and movement update
     void updateGame() {
-        int newX = pacmanX;
-        int newY = pacmanY;
+        int newX = robberX;
+        int newY = robberY;
 
         // Move based on direction
-        if (pacmanDir == 0) newX -= 3;
-        else if (pacmanDir == 2) newX += 3;
-        else if (pacmanDir == 4) newY -= 3;
-        else if (pacmanDir == 6) newY += 3;
+        if (robberDir == 0) newX -= 3;
+        else if (robberDir == 2) newX += 3;
+        else if (robberDir == 4) newY -= 3;
+        else if (robberDir == 6) newY += 3;
 
         // Check collision with maze
         int row = (newY + tileSize / 2) / tileSize;
         int col = (newX + tileSize / 2) / tileSize;
 
         if (maze[row][col] == 0) {
-            pacmanX = newX;
-            pacmanY = newY;
+            robberX = newX;
+            robberY = newY;
         }
 
-        // Eat dot or power pellet
-        row = (pacmanY + tileSize / 2) / tileSize;
-        col = (pacmanX + tileSize / 2) / tileSize;
+        // Collects Money or Money Bag
+        row = (robberY + tileSize / 2) / tileSize;
+        col = (robberX + tileSize / 2) / tileSize;
 
         if (dotMap[row][col] == 1) {
             dotMap[row][col] = 0;
@@ -273,18 +290,18 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
             dotMap[row][col] = 0;
             score += 50;
             playSound(new File("moneybagsound.wav"));
-            scaredMode = true;
-            scaredTimer = 500;
+            bribeMode = true;
+            bribeTimer = 500;
         }
 
-        //alerts you that the scared mode is running out
-        if (scaredMode) {
-            scaredTimer--;
-            if (scaredTimer == 50) {
+        //alerts you that the bribe mode is running out
+        if (bribeMode) {
+            bribeTimer--;
+            if (bribeTimer == 50) {
                 playSound(new File("tiktok2.wav"));
             }
-            if (scaredTimer <= 0) {
-                scaredMode = false;
+            if (bribeTimer <= 0) {
+                bribeMode = false;
             }
         }
         // update the level when all money is collected
@@ -293,15 +310,15 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
             if (level == 2) {
                 backgroundImage = flippedBackgroundImage; //switch the background
                 horizontal = true;
-                pacmanX = 385; // Reset pacman position
-                pacmanY = 200;
+                robberX = 385; // Reset pacman position
+                robberY = 200;
                 initMoney();
                 mirrorMazeAndDots(); // mirrors the maze and money
 
             } else if (level == 3) {
                 // we can add a boss level into here)
-                pacmanX = 15;
-                pacmanY = 200;
+                robberX = 15;
+                robberY = 200;
             }
         }
 
@@ -321,11 +338,11 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
 
     // Handle collision with Officer (Cop Car)
     void checkCollision(Officer officer) {
-        Rectangle pacmanRect = new Rectangle(pacmanX, pacmanY, 16, 16);
+        Rectangle robberRect = new Rectangle(robberX, robberY, 16, 16);
         Rectangle officerRect  = new Rectangle(officer.x, officer.y, 16, 16);
 
-        if (pacmanRect.intersects(officerRect)) {
-            if (scaredMode) {
+        if (robberRect.intersects(officerRect)) {
+            if (bribeMode) {
                 // Bribe Officers
                 officer.x = 180;
                 officer.y = 180;
@@ -340,9 +357,10 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
                     System.exit(0);
                 } else {
                     playDeathSounds(new File("Death Sound Robber.wav"), new File("pacman_death2.wav"));
-                    pacmanX = 15;
-                    pacmanY = 200;
+                    robberX = 15;
+                    robberY = 200;
                 }
+
             }
         }
     }
@@ -361,7 +379,7 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
             // Title screen
             g.setColor(Color.YELLOW);
             g.setFont(new Font("Arial", Font.BOLD, 36));
-            String title = "Cops vs. Robbers";
+            String title = "Robbers vs. Cops";
             int titleWidth = g.getFontMetrics().stringWidth(title);
             g.drawString(title, (getWidth() - titleWidth) / 2, getHeight() / 2 - 50);
 
@@ -382,18 +400,7 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
             }
         }
 
-        //DRAWS ONLY THE BORDER OF THE MAP. TURN THIS ON ONCE ALL THE WALLS ARE BUILT
-//        for (int row = 0; row < maze.length; row++) {
-//            for (int col = 0; col < maze[0].length; col++) {
-//                if (maze[row][col] == 1) {
-//                    // Check if the wall is part of the border (edge of the maze)
-//                    if (row == 0 || row == maze.length - 1 || col == 0 || col == maze[0].length - 1) {
-//                        g.setColor(Color.BLUE);  // Border color
-//                        g.fillRect(col * tileSize, row * tileSize, tileSize, tileSize);
-//                    }
-//                }
-//            }
-//        }
+
 
         // Drawing money stacks and money bags
         for (int row = 0; row < dotMap.length; row++) {
@@ -412,17 +419,17 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
 
         // Draw Robber
         int frame = 0;
-        if (pacmanDir == 0) frame = 1;
-        else if (pacmanDir == 2) frame = 3;
-        else if (pacmanDir == 4) frame = 5;
-        else if (pacmanDir == 6) frame = 7;
-        g.drawImage(pacmanSprite, pacmanX, pacmanY, null);
+        if (robberDir == 0) frame = 1;
+        else if (robberDir == 2) frame = 3;
+        else if (robberDir == 4) frame = 5;
+        else if (robberDir == 6) frame = 7;
+        g.drawImage(robberSprite, robberX, robberY, null);
 
         // Draw Officers (Cop Cars)
-        Ace.draw(g, scaredMode);
-        Stephane.draw(g, scaredMode);
-        Jackson.draw(g, scaredMode);
-        DonutMan.draw(g, scaredMode);
+        Ace.draw(g, bribeMode);
+        Stephane.draw(g, bribeMode);
+        Jackson.draw(g, bribeMode);
+        DonutMan.draw(g, bribeMode);
 
         // Draw HUD
         g.setColor(Color.YELLOW);
@@ -445,10 +452,10 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
             inStartMenu = false;
         } else {
             int key = e.getKeyCode();
-            if (key == KeyEvent.VK_LEFT) pacmanDir = 0;
-            if (key == KeyEvent.VK_RIGHT) pacmanDir = 2;
-            if (key == KeyEvent.VK_UP) pacmanDir = 4;
-            if (key == KeyEvent.VK_DOWN) pacmanDir = 6;
+            if (key == KeyEvent.VK_LEFT) robberDir = 0;
+            if (key == KeyEvent.VK_RIGHT) robberDir = 2;
+            if (key == KeyEvent.VK_UP) robberDir = 4;
+            if (key == KeyEvent.VK_DOWN) robberDir = 6;
         }
     }
 
@@ -490,7 +497,7 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
 
     // Main method to launch the game window
     public static void main(String[] args) {
-        JFrame frame = new JFrame("PacMan Game");
+        JFrame frame = new JFrame("PacMan Style Game");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
         frame.add(new PacManStyleGame());
