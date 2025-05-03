@@ -7,16 +7,24 @@ import java.awt.image.*;
 import java.io.*;
 import javax.imageio.*;
 
+// Officer.java
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import java.awt.*;
+import java.awt.image.*;
+import java.io.*;
+import javax.imageio.*;
+
 class Officer {
     BufferedImage sprite;
     int x, y, dir;
     int tileSize = 20;
 
     // Constructor loads sprite and initializes position/direction
-    public Officer (String name, String spritePath, int x, int y) {
+    public Officer(String name, String spritePath, int x, int y) {
         this.x = x;
         this.y = y;
-        this.dir = (int)(Math.random() * 4); // Random start direction
+        this.dir = (int)(Math.random() * 4); // Random start direction 0=L,1=R,2=U,3=D
         try {
             sprite = ImageIO.read(new File(spritePath));
         } catch (IOException e) {
@@ -24,55 +32,61 @@ class Officer {
         }
     }
 
-
     // Moves the Officer (Cop Car) based on current direction and maze constraints
     public void move(int[][] maze) {
         int speed = 2;
         int nextX = x, nextY = y;
 
-        // Calculate intended movement
         if (dir == 0) nextX -= speed;
         else if (dir == 1) nextX += speed;
         else if (dir == 2) nextY -= speed;
         else if (dir == 3) nextY += speed;
 
-        // Check maze collision
-        int row = (nextY + tileSize / 2) / tileSize;
-        int col = (nextX + tileSize / 2) / tileSize;
+        int row = (nextY + tileSize/2) / tileSize;
+        int col = (nextX + tileSize/2) / tileSize;
 
-        // Move only if not colliding with wall
         if (maze[row][col] == 0) {
             x = nextX;
             y = nextY;
         } else {
-            // Pick new random direction if blocked
             dir = (int)(Math.random() * 4);
         }
 
-
-        // At grid intersection, potentially change direction
         if (x % tileSize == 0 && y % tileSize == 0) {
-            int[] possibleDirs = new int[4];
+            int[] possible = new int[4];
             int count = 0;
-
-            // Check all valid directions from current tile
-            if (maze[y / tileSize][(x - tileSize) / tileSize] == 0) possibleDirs[count++] = 0; // left
-            if (maze[y / tileSize][(x + tileSize) / tileSize] == 0) possibleDirs[count++] = 1; // right
-            if (maze[(y - tileSize) / tileSize][x / tileSize] == 0) possibleDirs[count++] = 2; // up
-            if (maze[(y + tileSize) / tileSize][x / tileSize] == 0) possibleDirs[count++] = 3; // down
-
-            if (count > 0) {
-                dir = possibleDirs[(int)(Math.random() * count)];
-            }
+            if (maze[y/tileSize][(x-tileSize)/tileSize] == 0) possible[count++] = 0;
+            if (maze[y/tileSize][(x+tileSize)/tileSize] == 0) possible[count++] = 1;
+            if (maze[(y-tileSize)/tileSize][x/tileSize] == 0) possible[count++] = 2;
+            if (maze[(y+tileSize)/tileSize][x/tileSize] == 0) possible[count++] = 3;
+            if (count > 0) dir = possible[(int)(Math.random() * count)];
         }
     }
 
-    // Draw the Officer (Cop Car), using different frame if bribe
+    // Draw the Officer (Cop Car) with defensive frame selection
     public void draw(Graphics g, boolean bribe) {
-        int frame = bribe ? 0 : 0;
-        g.drawImage(sprite.getSubimage(frame * 32, 0, 32, 32), x, y, null);
+        // dir: 0=left,1=right,2=up,3=down
+        // sprite frames: 0=right,1=left,2=up,3=down (left-to-right)
+        int[] frameMap = {1, 0, 2, 3};
+        int frame = frameMap[dir];
+
+        int yOffset = 0;
+        // only attempt second row if it really exists
+        if (bribe && sprite.getHeight() >= 64) {
+            yOffset = sprite.getHeight()/2;
+        }
+
+        BufferedImage sub;
+        try {
+            sub = sprite.getSubimage(frame * 32, yOffset, 32, 32);
+        } catch (RasterFormatException ex) {
+            // fallback to first row if out-of-bounds
+            sub = sprite.getSubimage(frame * 32, 0, 32, 32);
+        }
+        g.drawImage(sub, x, y, null);
     }
 }
+
 
 // Main Pac-Man Style game panel class
 public class PacManStyleGame extends JPanel implements ActionListener, KeyListener {
@@ -86,10 +100,6 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
 
     int robberX = 15, robberY = 200;
     int robberDir = 0; // 0=left, 2=right, 4=up, 6=down
-    int AceDir = 0;
-    int StephaneDir = 0;
-    int JacksonDir = 0;
-    int DonutManDir = 0;
     int tileSize = 20;
 
     // Maze and dot map arrays
@@ -335,7 +345,6 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
                 robberY = 200;
             }
         }
-
 
         // Move officers
         Ace.move(maze);
