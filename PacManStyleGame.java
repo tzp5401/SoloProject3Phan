@@ -7,14 +7,7 @@ import java.awt.image.*;
 import java.io.*;
 import javax.imageio.*;
 
-// Officer.java
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import java.awt.*;
-import java.awt.image.*;
-import java.io.*;
-import javax.imageio.*;
-
+// Officer Class
 class Officer {
     BufferedImage sprite;
     int x, y, dir;
@@ -280,7 +273,7 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
     void mirrorMazeAndDots() {
         maze = mirrorArray(maze, horizontal);
         dotMap = mirrorArray(dotMap, horizontal);
-        }
+    }
 
     // Game logic and movement update
     void updateGame() {
@@ -369,7 +362,7 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
                 // Bribe Officers
                 officer.x = 180;
                 officer.y = 180;
-                score -= 20;
+                score -= 50;
                 playSound(new File("pacman_eatghost.wav"));
             } else {
                 // Lose a life
