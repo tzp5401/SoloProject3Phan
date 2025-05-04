@@ -1,23 +1,32 @@
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
+import java.awt.image.RasterFormatException;   // for subimage fallback
+import java.util.*;                             // for List, ArrayList, Random
 import java.io.*;
+import java.util.List;
 import javax.imageio.*;
 
-// Officer Class
+// AI types for each cop’s behavior
+enum AIType { CHASER, AMBUSHER, SCATTER, RANDOM }
+
+// Officer Class (non-public so it can share this file)
 class Officer {
     BufferedImage sprite;
     int x, y, dir;
     int tileSize = 20;
 
-    // Constructor loads sprite and initializes position/direction
-    public Officer(String name, String spritePath, int x, int y) {
-        this.x = x;
-        this.y = y;
-        this.dir = (int)(Math.random() * 4); // Random start direction 0=L,1=R,2=U,3=D
+    private AIType ai;
+    private int targetX, targetY;
+
+    public Officer(String name, String spritePath, int x, int y, AIType ai) {
+        this.x = x; this.y = y;
+        this.dir = (int)(Math.random() * 4);  // 0=L,1=R,2=U,3=D
+        this.ai  = ai;
         try {
             sprite = ImageIO.read(new File(spritePath));
         } catch (IOException e) {
@@ -25,58 +34,82 @@ class Officer {
         }
     }
 
-    // Moves the Officer (Cop Car) based on current direction and maze constraints
+    public void setTarget(int px, int py) {
+        this.targetX = px;
+        this.targetY = py;
+    }
+
     public void move(int[][] maze) {
         int speed = 2;
         int nextX = x, nextY = y;
-
-        if (dir == 0) nextX -= speed;
-        else if (dir == 1) nextX += speed;
-        else if (dir == 2) nextY -= speed;
-        else if (dir == 3) nextY += speed;
+        if (dir == 0)       nextX -= speed;
+        else if (dir == 1)  nextX += speed;
+        else if (dir == 2)  nextY -= speed;
+        else if (dir == 3)  nextY += speed;
 
         int row = (nextY + tileSize/2) / tileSize;
         int col = (nextX + tileSize/2) / tileSize;
-
         if (maze[row][col] == 0) {
-            x = nextX;
-            y = nextY;
+            x = nextX; y = nextY;
         } else {
             dir = (int)(Math.random() * 4);
         }
 
         if (x % tileSize == 0 && y % tileSize == 0) {
-            int[] possible = new int[4];
-            int count = 0;
-            if (maze[y/tileSize][(x-tileSize)/tileSize] == 0) possible[count++] = 0;
-            if (maze[y/tileSize][(x+tileSize)/tileSize] == 0) possible[count++] = 1;
-            if (maze[(y-tileSize)/tileSize][x/tileSize] == 0) possible[count++] = 2;
-            if (maze[(y+tileSize)/tileSize][x/tileSize] == 0) possible[count++] = 3;
-            if (count > 0) dir = possible[(int)(Math.random() * count)];
+            dir = chooseDirection(maze);
         }
     }
 
-    // Draw the Officer (Cop Car) with defensive frame selection
     public void draw(Graphics g, boolean bribe) {
-        // dir: 0=left,1=right,2=up,3=down
-        // sprite frames: 0=right,1=left,2=up,3=down (left-to-right)
-        int[] frameMap = {1, 0, 2, 3};
+        int[] frameMap = {1,0,2,3};
         int frame = frameMap[dir];
-
-        int yOffset = 0;
-        // only attempt second row if it really exists
-        if (bribe && sprite.getHeight() >= 64) {
-            yOffset = sprite.getHeight()/2;
-        }
-
+        int yOffset = (bribe && sprite.getHeight()>=64) ? sprite.getHeight()/2 : 0;
         BufferedImage sub;
         try {
-            sub = sprite.getSubimage(frame * 32, yOffset, 32, 32);
+            sub = sprite.getSubimage(frame*32, yOffset, 32,32);
         } catch (RasterFormatException ex) {
-            // fallback to first row if out-of-bounds
-            sub = sprite.getSubimage(frame * 32, 0, 32, 32);
+            sub = sprite.getSubimage(frame*32, 0,32,32);
         }
         g.drawImage(sub, x, y, null);
+    }
+
+    // AI helpers
+    private boolean canGo(int d, int[][] maze) {
+        int tx = x + (d==1?tileSize:(d==0?-tileSize:0));
+        int ty = y + (d==3?tileSize:(d==2?-tileSize:0));
+        int row = (ty+tileSize/2)/tileSize, col = (tx+tileSize/2)/tileSize;
+        return maze[row][col] == 0;
+    }
+
+    private int chooseDirection(int[][] maze) {
+        List<Integer> turns = new ArrayList<>();
+        for (int d=0; d<4; d++) if (canGo(d, maze)) turns.add(d);
+        if (turns.isEmpty()) return dir;
+
+        switch (ai) {
+            case CHASER:
+                return greedy(turns, targetX, targetY);
+            case AMBUSHER:
+                int ax = targetX + ((dir==1?4:(dir==0?-4:0)) * tileSize);
+                int ay = targetY + ((dir==3?4:(dir==2?-4:0)) * tileSize);
+                return greedy(turns, ax, ay);
+            case SCATTER:
+                return greedy(turns, 0, 0);
+            case RANDOM:
+            default:
+                return turns.get(new Random().nextInt(turns.size()));
+        }
+    }
+
+    private int greedy(List<Integer> turns, int tx, int ty) {
+        double best=Double.MAX_VALUE; int pick=turns.get(0);
+        for (int d:turns) {
+            int cx = x + (d==1?tileSize:(d==0?-tileSize:0));
+            int cy = y + (d==3?tileSize:(d==2?-tileSize:0));
+            double dist = Math.pow(cx-tx,2) + Math.pow(cy-ty,2);
+            if (dist<best) { best=dist; pick=d; }
+        }
+        return pick;
     }
 }
 
@@ -132,10 +165,10 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
 
 
         // Initialize Officers
-        Ace = new Officer("Ace", "Red Cop Car.png", 180, 180);
-        Stephane  = new Officer("Stephane",  "Pink Cop Car.png", 200, 180);
-        Jackson   = new Officer("Jackson", "White Cop Car.png", 220, 180);
-        DonutMan  = new Officer("DonutMan",  "Donut Cop Car.png", 240, 180);
+        Ace = new Officer("Ace", "Red Cop Car.png", 180, 180, AIType.CHASER);
+        Stephane  = new Officer("Stephane",  "Pink Cop Car.png", 200, 180, AIType.AMBUSHER);
+        Jackson   = new Officer("Jackson", "White Cop Car.png", 220, 180, AIType.RANDOM);
+        DonutMan  = new Officer("DonutMan",  "Donut Cop Car.png", 240, 180, AIType.RANDOM);
 
         timer = new Timer(40, this);
         timer.start();
@@ -338,6 +371,11 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
                 robberY = 200;
             }
         }
+
+        Ace.setTarget(robberX, robberY);
+        Stephane.setTarget(robberX, robberY);
+        Jackson .setTarget(robberX, robberY);
+        DonutMan.setTarget(robberX, robberY);
 
         // Move officers
         Ace.move(maze);
