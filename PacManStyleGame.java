@@ -11,6 +11,16 @@ import java.io.*;
 import java.util.List;
 import javax.imageio.*;
 
+// JInput imports for Xbox controller
+import net.java.games.input.Controller;
+import net.java.games.input.ControllerEnvironment;
+import net.java.games.input.Component;
+
+// suppress JInput INFO logs
+import java.util.logging.Logger;
+import java.util.logging.Level;
+
+
 // AI types for each cop’s behavior
 enum AIType { CHASER, AMBUSHER, SCATTER, RANDOM }
 
@@ -138,8 +148,12 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
     boolean bribeMode = false;
     int bribeTimer = 0;
     boolean horizontal = false;
-
     boolean inStartMenu = true;
+
+    // ─── new controller fields ───────────────────────────────────────────────
+    private Controller xboxController;
+    private Component xAxis, yAxis, pov, startButton;
+    private int lastKeyPressed = -1;
 
     boolean allMoneyCollected() {
         for (int row = 0; row < dotMap.length; row++) {
@@ -155,6 +169,12 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
 
     // Constructor initializes game
     public PacManStyleGame() {
+
+        // ── SUPPRESS JINPUT LOGGING ─────────────────────────────
+        Logger jinputLog = Logger.getLogger("net.java.games.input");
+        jinputLog.setLevel(Level.OFF);
+        jinputLog.setUseParentHandlers(false);
+
         setPreferredSize(new Dimension(460, 460));
         setBackground(Color.BLACK);
         setFocusable(true);
@@ -162,6 +182,24 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
         loadResources();
         loadMaze();
         initMoney();
+
+        // ─── find the Xbox controller ───────────────────────────────────
+        Controller[] controllers =
+                ControllerEnvironment.getDefaultEnvironment().getControllers();
+        for (Controller c : controllers) {
+            if (c.getType() == Controller.Type.GAMEPAD) {
+                xboxController = c;
+                break;
+            }
+        }
+        if (xboxController != null) {
+            xAxis = xboxController.getComponent(Component.Identifier.Axis.X);
+            yAxis = xboxController.getComponent(Component.Identifier.Axis.Y);
+            pov = xboxController.getComponent(Component.Identifier.Axis.POV);
+            startButton = xboxController.getComponent(Component.Identifier.Button._7);
+        } else {
+            System.out.println("No gamepad found; using keyboard only.");
+        }
 
 
         // Initialize Officers
@@ -174,6 +212,7 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
         timer.start();
         playSound(new File("start.wav"));
     }
+
 
     // Load Cops vs. Robbers sprites
     void loadResources() {
@@ -281,10 +320,15 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
     }
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!inStartMenu) {
-            updateGame();
+        if (xboxController!=null) xboxController.poll();
+        if (inStartMenu) {
+            if ((startButton!=null && startButton.getPollData()==1.0f)
+                    || lastKeyPressed==KeyEvent.VK_ENTER) {
+                inStartMenu=false;
+            }
+            repaint(); return;
         }
-        repaint();
+        updateGame(); repaint();
     }
 
     int[][] mirrorArray(int[][] original, boolean horizontal) {
@@ -312,6 +356,24 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
     void updateGame() {
         int newX = robberX;
         int newY = robberY;
+
+        // ─── poll gamepad & set robberDir ───────────────────────────────────
+        if (xboxController != null) {
+            xboxController.poll();
+            float hat = pov.getPollData();
+            // use the nested POV enum, not static fields on Component
+            if (hat == Component.POV.UP)    robberDir = 4;
+            else if (hat == Component.POV.DOWN)  robberDir = 6;
+            else if (hat == Component.POV.LEFT)  robberDir = 0;
+            else if (hat == Component.POV.RIGHT) robberDir = 2;
+            else {
+                float xv = xAxis.getPollData(), yv = yAxis.getPollData();
+                if (Math.abs(xv) > 0.5f || Math.abs(yv) > 0.5f) {
+                    if (Math.abs(xv) > Math.abs(yv)) robberDir = (xv < 0 ? 0 : 2);
+                    else                              robberDir = (yv < 0 ? 4 : 6);
+                }
+            }
+        }
 
         // Move based on direction
         if (robberDir == 0) newX -= 3;
