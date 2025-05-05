@@ -1,14 +1,13 @@
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.swing.*;
-import javax.swing.Timer;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
-import java.awt.image.RasterFormatException;   // for subimage fallback
-import java.util.*;                             // for List, ArrayList, Random
 import java.io.*;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Comparator;
 import javax.imageio.*;
 
 // JInput imports for Xbox controller
@@ -16,10 +15,11 @@ import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
 import net.java.games.input.Component;
 
+
 // suppress JInput INFO logs
+import java.util.Random;
 import java.util.logging.Logger;
 import java.util.logging.Level;
-
 
 // AI types for each cop’s behavior
 enum AIType { CHASER, AMBUSHER, SCATTER, RANDOM }
@@ -123,7 +123,6 @@ class Officer {
     }
 }
 
-
 // Main Pac-Man Style game panel class
 public class PacManStyleGame extends JPanel implements ActionListener, KeyListener {
 
@@ -169,6 +168,13 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
 
     // Constructor initializes game
     public PacManStyleGame() {
+        setPreferredSize(new Dimension(460, 460));
+        setBackground(Color.BLACK);
+        setFocusable(true);
+        addKeyListener(this);
+        loadResources();
+        loadMaze();
+        initMoney();
 
         // ── SUPPRESS JINPUT LOGGING ─────────────────────────────
         Logger jinputLog = Logger.getLogger("net.java.games.input");
@@ -213,7 +219,6 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
         playSound(new File("start.wav"));
     }
 
-
     // Load Cops vs. Robbers sprites
     void loadResources() {
         try {
@@ -227,6 +232,50 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
             e.printStackTrace();
         }
     }
+
+
+    List<String[]> loadLeaderboard(String filename) {
+        List<String[]> list = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 2) {
+                    list.add(parts); // parts[0] = name, parts[1] = score
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    void saveLeaderboard(List<String[]> list, String filename) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
+            for (String[] entry : list) {
+                writer.println(entry[0] + "," + entry[1]);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void viewLeaderboard() {
+        // Load leaderboard from file
+        List<String[]> leaderboard = loadLeaderboard("leaderboard.txt");
+
+        // Sort leaderboard based on score
+        leaderboard.sort((a, b) -> Integer.compare(Integer.parseInt(b[1]), Integer.parseInt(a[1])));
+
+        StringBuilder lbText = new StringBuilder("LEADERBOARD:\n");
+        for (int i = 0; i < leaderboard.size(); i++) {
+            lbText.append((i + 1) + ". " + leaderboard.get(i)[0] + " - $" + leaderboard.get(i)[1] + "\n");
+        }
+
+        // Show leaderboard
+        JOptionPane.showMessageDialog(this, lbText.toString(), "Leaderboard", JOptionPane.INFORMATION_MESSAGE);
+    }
+
 
     // Build simple maze layout
     void loadMaze() {
@@ -316,8 +365,8 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
         dotMap[17][20] = 2;
         dotMap[6][12] = 2;
         dotMap[2][18] = 2;
-
     }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (xboxController!=null) xboxController.poll();
@@ -330,6 +379,7 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
         }
         updateGame(); repaint();
     }
+
 
     int[][] mirrorArray(int[][] original, boolean horizontal) {
         int rows = original.length;
@@ -434,6 +484,7 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
             }
         }
 
+        // Targets the player
         Ace.setTarget(robberX, robberY);
         Stephane.setTarget(robberX, robberY);
         Jackson .setTarget(robberX, robberY);
@@ -462,21 +513,37 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
                 // Bribe Officers
                 officer.x = 180;
                 officer.y = 180;
-                score -= 50;
+                score -= 20;
                 playSound(new File("pacman_eatghost.wav"));
             } else {
                 // Lose a life
                 lives--;
                 if (lives <= 0) {
                     playDeathSounds(new File("Death Sound Robber.wav"), new File("pacman_death2.wav"));
-                    JOptionPane.showMessageDialog(this, "Game Over!\nMoney: $" + score);
+
+                    String name = JOptionPane.showInputDialog(this, "Game Over!\nEnter your name:");
+                    if (name == null || name.trim().isEmpty()) name = "Anonymous";
+
+                    List<String[]> leaderboard = loadLeaderboard("leaderboard.txt");
+                    leaderboard.add(new String[]{name, String.valueOf(score)});
+
+                    leaderboard.sort((a, b) -> Integer.compare(Integer.parseInt(b[1]), Integer.parseInt(a[1])));
+                    if (leaderboard.size() > 5) leaderboard = leaderboard.subList(0, 5);
+
+                    saveLeaderboard(leaderboard, "leaderboard.txt");
+
+                    StringBuilder lbText = new StringBuilder("LEADERBOARD:\n");
+                    for (int i = 0; i < leaderboard.size(); i++) {
+                        lbText.append((i+1) + ". " + leaderboard.get(i)[0] + " - $" + leaderboard.get(i)[1] + "\n");
+                    }
+                    JOptionPane.showMessageDialog(this, lbText.toString());
+
                     System.exit(0);
                 } else {
                     playDeathSounds(new File("Death Sound Robber.wav"), new File("pacman_death2.wav"));
                     robberX = 15;
                     robberY = 200;
                 }
-
             }
         }
     }
@@ -503,6 +570,11 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
             String prompt = "Press ENTER to start";
             int promptWidth = g.getFontMetrics().stringWidth(prompt);
             g.drawString(prompt, (getWidth() - promptWidth) / 2, getHeight() / 2);
+
+            String leaderboardPrompt = "Press L to view leaderboard";
+            int leaderboardPromptWidth = g.getFontMetrics().stringWidth(leaderboardPrompt);
+            g.drawString(leaderboardPrompt, (getWidth() - leaderboardPromptWidth) / 2, getHeight() / 2 + 30);
+
             return;
         }
 
@@ -515,6 +587,19 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
                 }
             }
         }
+
+        //DRAWS ONLY THE BORDER OF THE MAP. TURN THIS ON ONCE ALL THE WALLS ARE BUILT SO IT LOOKS LIKE THE BUILDINGS ARE THE WALLS
+//        for (int row = 0; row < maze.length; row++) {
+//            for (int col = 0; col < maze[0].length; col++) {
+//                if (maze[row][col] == 1) {
+//                    // Check if the wall is part of the border (edge of the maze)
+//                    if (row == 0 || row == maze.length - 1 || col == 0 || col == maze[0].length - 1) {
+//                        g.setColor(Color.BLUE);  // Border color
+//                        g.fillRect(col * tileSize, row * tileSize, tileSize, tileSize);
+//                    }
+//                }
+//            }
+//        }
 
 
 
@@ -566,6 +651,8 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
     public void keyPressed(KeyEvent e) {
         if (inStartMenu && e.getKeyCode() == KeyEvent.VK_ENTER) {
             inStartMenu = false;
+        } else if (e.getKeyCode() == KeyEvent.VK_L) {
+            viewLeaderboard(); // Show the leaderboard
         } else {
             int key = e.getKeyCode();
             if (key == KeyEvent.VK_LEFT) robberDir = 0;
