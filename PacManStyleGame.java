@@ -151,7 +151,7 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
     // ─── new controller fields ───────────────────────────────────────────────
     private Controller xboxController;
     private Component xAxis, yAxis, pov, startButton, viewLbButton;
-    private int lastKeyPressed = -1;
+    private boolean lbWasDown = false;     // to detect edge-trigger
 
     boolean allMoneyCollected() {
         for (int row = 0; row < dotMap.length; row++) {
@@ -487,25 +487,27 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        // 1) poll pad
-        if (xboxController!=null) xboxController.poll();
+        // 1) poll pad once
+        if (xboxController != null) {
+            xboxController.poll();
 
-        // 2) if LB pressed, show leaderboard
-        if (viewLbButton!=null && viewLbButton.getPollData()==1.0f) {
-            viewLeaderboard();
+            boolean lbDown = (viewLbButton != null && viewLbButton.getPollData() == 1.0f);
+            if (lbDown && !lbWasDown) {
+                viewLeaderboard();
+            }
+            lbWasDown = lbDown;
         }
 
-        // 3) rest of tick
+        // 2) start-menu “Start” button
         if (inStartMenu) {
-            // also allow “Start” button to dismiss menu
-            if ((startButton!=null && startButton.getPollData()==1.0f) ||
-                    lastKeyPressed==KeyEvent.VK_ENTER) {
-                inStartMenu=false;
+            if ((startButton != null && startButton.getPollData() == 1.0f)) {
+                inStartMenu = false;
             }
             repaint();
             return;
         }
 
+        // 3) game tick
         updateGame();
         repaint();
     }
@@ -708,28 +710,14 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
         }
 
         // Draw ALL maze walls
-        for (int row = 0; row < maze.length; row++) {
-            for (int col = 0; col < maze[0].length; col++) {
-                if (maze[row][col] == 1) {
-                    g.setColor(Color.BLUE);
-                    g.fillRect(col * tileSize, row * tileSize, tileSize, tileSize);
-                }
-            }
-        }
-
-        //DRAWS ONLY THE BORDER OF THE MAP. TURN THIS ON ONCE ALL THE WALLS ARE BUILT SO IT LOOKS LIKE THE BUILDINGS ARE THE WALLS
-//        for (int row = 0; row < maze.length; row++) {
-//            for (int col = 0; col < maze[0].length; col++) {
-//                if (maze[row][col] == 1) {
-//                    // Check if the wall is part of the border (edge of the maze)
-//                    if (row == 0 || row == maze.length - 1 || col == 0 || col == maze[0].length - 1) {
-//                        g.setColor(Color.BLUE);  // Border color
-//                        g.fillRect(col * tileSize, row * tileSize, tileSize, tileSize);
-//                    }
-//                }
-//            }
-//        }
-
+        //for (int row = 0; row < maze.length; row++) {
+            //for (int col = 0; col < maze[0].length; col++) {
+                //if (maze[row][col] == 1) {
+                    //g.setColor(Color.BLUE);
+                    //g.fillRect(col * tileSize, row * tileSize, tileSize, tileSize);
+                //}
+            //}
+        //}
 
 
         // Drawing money stacks and money bags
