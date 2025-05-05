@@ -90,7 +90,7 @@ class Officer {
         return maze[row][col] == 0;
     }
 
-    private int chooseDirection(int[][] maze) {
+    public int chooseDirection(int[][] maze) {
         List<Integer> turns = new ArrayList<>();
         for (int d=0; d<4; d++) if (canGo(d, maze)) turns.add(d);
         if (turns.isEmpty()) return dir;
@@ -211,8 +211,8 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
         // Initialize Officers
         Ace = new Officer("Ace", "Red Cop Car.png", 120, 90, AIType.CHASER);
         Stephane  = new Officer("Stephane",  "Pink Cop Car.png", 120, 400, AIType.AMBUSHER);
-        Jackson   = new Officer("Jackson", "White Cop Car.png", 400, 100, AIType.RANDOM);
-        DonutMan  = new Officer("DonutMan",  "Donut Cop Car.png", 400, 350, AIType.RANDOM);
+        Jackson   = new Officer("Jackson", "White Cop Car.png", 400, 100, AIType.AMBUSHER);
+        DonutMan  = new Officer("DonutMan",  "Donut Cop Car.png", 350, 350, AIType.CHASER);
 
         timer = new Timer(40, this);
         timer.start();
@@ -641,11 +641,17 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
 
         if (robberRect.intersects(officerRect)) {
             if (bribeMode) {
-                // Bribe Officers
-                officer.x = 250;
-                officer.y = 230;
+                // --- NEW FIXED BRIBE BEHAVIOR ---
+                // teleport them back to a clean grid cell
+                int gridRow = 13, gridCol = 9;            // pick a valid empty cell
+                officer.x = gridCol * tileSize;
+                officer.y = gridRow * tileSize;
                 score -= 20;
                 playSound(new File("pacman_eatghost.wav"));
+
+                // force immediate chase-direction
+                officer.dir = officer.chooseDirection(maze);
+                return;
             } else {
                 // Lose a life
                 lives--;
