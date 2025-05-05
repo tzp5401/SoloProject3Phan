@@ -7,7 +7,6 @@ import java.awt.image.*;
 import java.io.*;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Comparator;
 import javax.imageio.*;
 
 // JInput imports for Xbox controller
