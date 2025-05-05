@@ -151,7 +151,7 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
 
     // ─── new controller fields ───────────────────────────────────────────────
     private Controller xboxController;
-    private Component xAxis, yAxis, pov, startButton;
+    private Component xAxis, yAxis, pov, startButton, viewLbButton;
     private int lastKeyPressed = -1;
 
     boolean allMoneyCollected() {
@@ -203,6 +203,7 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
             yAxis = xboxController.getComponent(Component.Identifier.Axis.Y);
             pov = xboxController.getComponent(Component.Identifier.Axis.POV);
             startButton = xboxController.getComponent(Component.Identifier.Button._7);
+            viewLbButton= xboxController.getComponent(Component.Identifier.Button._4);
         } else {
             System.out.println("No gamepad found; using keyboard only.");
         }
@@ -369,17 +370,28 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        // 1) poll pad
         if (xboxController!=null) xboxController.poll();
+
+        // 2) if LB pressed, show leaderboard
+        if (viewLbButton!=null && viewLbButton.getPollData()==1.0f) {
+            viewLeaderboard();
+        }
+
+        // 3) rest of tick
         if (inStartMenu) {
-            if ((startButton!=null && startButton.getPollData()==1.0f)
-                    || lastKeyPressed==KeyEvent.VK_ENTER) {
+            // also allow “Start” button to dismiss menu
+            if ((startButton!=null && startButton.getPollData()==1.0f) ||
+                    lastKeyPressed==KeyEvent.VK_ENTER) {
                 inStartMenu=false;
             }
-            repaint(); return;
+            repaint();
+            return;
         }
-        updateGame(); repaint();
-    }
 
+        updateGame();
+        repaint();
+    }
 
     int[][] mirrorArray(int[][] original, boolean horizontal) {
         int rows = original.length;
