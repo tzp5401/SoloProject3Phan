@@ -209,10 +209,10 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
 
 
         // Initialize Officers
-        Ace = new Officer("Ace", "Red Cop Car.png", 180, 180, AIType.CHASER);
-        Stephane  = new Officer("Stephane",  "Pink Cop Car.png", 200, 180, AIType.AMBUSHER);
-        Jackson   = new Officer("Jackson", "White Cop Car.png", 220, 180, AIType.RANDOM);
-        DonutMan  = new Officer("DonutMan",  "Donut Cop Car.png", 240, 180, AIType.RANDOM);
+        Ace = new Officer("Ace", "Red Cop Car.png", 120, 90, AIType.CHASER);
+        Stephane  = new Officer("Stephane",  "Pink Cop Car.png", 120, 400, AIType.AMBUSHER);
+        Jackson   = new Officer("Jackson", "White Cop Car.png", 400, 100, AIType.RANDOM);
+        DonutMan  = new Officer("DonutMan",  "Donut Cop Car.png", 400, 350, AIType.RANDOM);
 
         timer = new Timer(40, this);
         timer.start();
@@ -286,7 +286,7 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
             maze[i][22] = 1;
         }
 
-        // YOU HAVE TO MANUALLY PLACE THE WALLS ALONG THE CITY BUILDINGS. I HAVE THE WALLS PAINTED SO YOU CAN SEE HWAT YOURE DOING
+        // YOU HAVE TO MANUALLY PLACE THE WALLS ALONG THE CITY BUILDINGS. I HAVE THE WALLS PAINTED SO YOU CAN SEE WHAT YOU'RE DOING
 
         // Wall Formation and Collision For Building #1 Using Array List:
         maze[3][0] = 1;
@@ -323,6 +323,124 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
         maze[3][19] = 1;
         maze[3][20] = 1;
         maze[3][21] = 1;
+
+        // Wall Formation and Collision For Building #4 Using Array List:
+        maze[6][8] = 1;
+        maze[6][9] = 1;
+        maze[6][10] = 1;
+        maze[6][11] = 1;
+        maze[7][8] = 1;
+        maze[7][9] = 1;
+        maze[7][10] = 1;
+        maze[7][11] = 1;
+
+        // Wall Formation and Collision For Building #5 Using Array List:
+        maze[6][14] = 1;
+        maze[6][15] = 1;
+        maze[6][16] = 1;
+        maze[6][17] = 1;
+        maze[7][14] = 1;
+        maze[7][15] = 1;
+        maze[7][16] = 1;
+        maze[7][17] = 1;
+
+        // Wall Formation and Collision For Building #5 Using Array List:
+        maze[6][20] = 1;
+        maze[6][21] = 1;
+        maze[7][20] = 1;
+        maze[7][21] = 1;
+
+        // Wall Formation and Collision For Building #6 Using Array List:
+        maze[9][14] = 1;
+        maze[9][15] = 1;
+        maze[9][16] = 1;
+        maze[9][17] = 1;
+        maze[10][14] = 1;
+        maze[10][15] = 1;
+        maze[10][16] = 1;
+        maze[10][17] = 1;
+        maze[11][14] = 1;
+        maze[11][15] = 1;
+        maze[11][16] = 1;
+        maze[11][17] = 1;
+
+        // Wall Formation and Collision For Building #6 Using Array List:
+        maze[9][20] = 1;
+        maze[9][21] = 1;
+        maze[10][20] = 1;
+        maze[10][21] = 1;
+        maze[11][20] = 1;
+        maze[11][21] = 1;
+
+        // Wall Formation and Collision For Building #6 Using Array List:
+        maze[14][8] = 1;
+        maze[14][9] = 1;
+        maze[14][10] = 1;
+        maze[14][11] = 1;
+        maze[14][12] = 1;
+        maze[14][13] = 1;
+        maze[14][14] = 1;
+        maze[14][15] = 1;
+        maze[14][16] = 1;
+        maze[14][17] = 1;
+        maze[15][8] = 1;
+        maze[15][17] = 1;
+        maze[16][8] = 1;
+        maze[16][17] = 1;
+        maze[17][8] = 1;
+        maze[17][9] = 1;
+        maze[17][10] = 1;
+        maze[17][11] = 1;
+        maze[17][12] = 1;
+        maze[17][13] = 1;
+        maze[17][14] = 1;
+        maze[17][15] = 1;
+        maze[17][16] = 1;
+        maze[17][17] = 1;
+
+        // Wall Formation and Collision For Building #7 Using Array List:
+        maze[15][20] = 1;
+        maze[15][21] = 1;
+        maze[16][20] = 1;
+        maze[16][21] = 1;
+        maze[20][20] = 1;
+        maze[20][21] = 1;
+        maze[21][20] = 1;
+        maze[21][21] = 1;
+
+        // Wall Formation and Collision For Building #8 Using Array List:
+        maze[19][8] = 1;
+        maze[19][9] = 1;
+        maze[19][10] = 1;
+        maze[19][11] = 1;
+        maze[19][12] = 1;
+        maze[20][8] = 1;
+        maze[20][12] = 1;
+        maze[21][8] = 1;
+        maze[21][12] = 1;
+
+        // Wall Formation and Collision For Building #9 Using Array List:
+        maze[19][15] = 1;
+        maze[19][16] = 1;
+        maze[19][17] = 1;
+        maze[20][15] = 1;
+        maze[20][17] = 1;
+        maze[21][15] = 1;
+        maze[21][17] = 1;
+
+        // Wall Formation and Collision For Building #10 Using Array List:
+        maze[9][8] = 1;
+        maze[9][9] = 1;
+        maze[9][10] = 1;
+        maze[9][11] = 1;
+        maze[9][12] = 1;
+        maze[10][8] = 1;
+        maze[10][12] = 1;
+        maze[11][8] = 1;
+        maze[11][9] = 1;
+        maze[11][10] = 1;
+        maze[11][11] = 1;
+        maze[11][12] = 1;
 
     }
 
@@ -522,8 +640,8 @@ public class PacManStyleGame extends JPanel implements ActionListener, KeyListen
         if (robberRect.intersects(officerRect)) {
             if (bribeMode) {
                 // Bribe Officers
-                officer.x = 180;
-                officer.y = 180;
+                officer.x = 250;
+                officer.y = 230;
                 score -= 20;
                 playSound(new File("pacman_eatghost.wav"));
             } else {
